@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seguimiento de Cierre Económico — Grupo</title>
+<title>Portal Cignetti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -116,7 +116,7 @@ textarea.code{width:100%;height:200px;font:12px ui-monospace,monospace}
 <body>
 <header>
   <div class="brand">
-    <h1>Seguimiento de Cierre Económico</h1>
+    <h1>Portal Cignetti</h1>
     <span class="sub" id="hdrSub">Estado de resultados por firma y actividad · USD</span>
     <span class="status" id="status">Conectando…</span>
     <span id="userBox"><span id="userMail"></span><span id="userRol" class="pill" style="background:#2f3a52;color:#d8dde6"></span><button id="btnSalir">Salir</button></span>
@@ -137,8 +137,9 @@ textarea.code{width:100%;height:200px;font:12px ui-monospace,monospace}
 
 <script>
 /* ===================== Versión y novedades ===================== */
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.5.1";
 const NOVEDADES = [
+  {v:"1.5.1", f:"16/11/2026", items:["La app pasa a llamarse Portal Cignetti."]},
   {v:"1.5.0", f:"16/11/2026", items:["La app se publica en GitHub (Portal-Cignetti) y guarda los datos en una base propia en la nube: ya no hace falta cuenta de claude.ai.","Ingreso con mail y contraseña. Los usuarios de consulta ven el estado de resultados; los editores además cargan conceptos, plan de cuentas y campañas.","Recuperación de contraseña por mail."]},
   {v:"1.4.0", f:"12/11/2026", items:["Cada actividad muestra su propio % sobre ventas al lado del importe: la estructura de costos de cada unidad de negocio se lee directo.","Selector «Mostrar»: USD y %, solo USD o solo %."]},
   {v:"1.3.0", f:"12/11/2026", items:["Versión instalable para Windows (Cierre Cignetti), con actualizaciones automáticas al abrir.","Al ingresar se muestran las novedades de cada versión. También podés verlas desde el botón «Novedades»."]},
@@ -736,7 +737,7 @@ function sbAdapter(){
 }
 function pantallaLogin(modo, msg){
   const c=$("#loginCard"); $("#login").classList.add("on");
-  const cab=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="34" height="34" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="20" fill="#1c2230"/><rect x="22" y="48" width="14" height="30" rx="3" fill="#4c8c76"/><rect x="43" y="36" width="14" height="42" rx="3" fill="#4c8c76"/><rect x="64" y="22" width="14" height="56" rx="3" fill="#a8834a"/></svg><div><h2>Cierre Cignetti</h2><div class="muted" style="font-size:12.5px">Seguimiento del cierre económico</div></div></div>`;
+  const cab=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="34" height="34" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="20" fill="#1c2230"/><rect x="22" y="48" width="14" height="30" rx="3" fill="#4c8c76"/><rect x="43" y="36" width="14" height="42" rx="3" fill="#4c8c76"/><rect x="64" y="22" width="14" height="56" rx="3" fill="#a8834a"/></svg><div><h2>Portal Cignetti</h2><div class="muted" style="font-size:12.5px">Seguimiento del cierre económico del Grupo</div></div></div>`;
   if(modo==="nueva"){
     c.innerHTML=cab+`<p class="muted" style="font-size:13px">Elegí tu nueva contraseña.</p>
       <div class="fld"><label>Nueva contraseña</label><input type="password" id="lgP1" autocomplete="new-password"></div>

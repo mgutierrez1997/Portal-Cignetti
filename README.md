@@ -1,4 +1,4 @@
-# Cierre Cignetti
+# Portal Cignetti
 
 Seguimiento del cierre económico del Grupo Cignetti: estado de resultados por firma y por actividad
 (Ventas → Costo de ventas → Contribución marginal → Costos de estructura → Margen bruto → Intereses →
