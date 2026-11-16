@@ -1,0 +1,14 @@
+{
+  "versiones": [
+    {
+      "v": "1.0.0",
+      "f": "12/11/2026",
+      "items": [
+        "Primera versión instalable de Cierre Cignetti para Windows.",
+        "Abre el seguimiento del cierre económico en su propia ventana, con la sesión guardada.",
+        "Al abrir busca actualizaciones en OneDrive\\Documentos\\Cierre Cignetti\\Actualizaciones y muestra sus novedades.",
+        "Las mejoras de la pantalla de cierre aparecen solas al ingresar, en el cartel «Novedades»."
+      ]
+    }
+  ]
+}

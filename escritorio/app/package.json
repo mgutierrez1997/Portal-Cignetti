@@ -1,0 +1,9 @@
+{
+  "name": "cierre-cignetti",
+  "productName": "Cierre Cignetti",
+  "version": "1.0.0",
+  "description": "Seguimiento del cierre económico del Grupo Cignetti (estado de resultados por firma y actividad)",
+  "main": "main.js",
+  "author": "Mateo Gutiérrez",
+  "license": "UNLICENSED"
+}

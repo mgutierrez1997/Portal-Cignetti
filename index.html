@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguimiento de Cierre Económico — Grupo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ee; --panel:#ffffff; --ink:#1c2230; --muted:#6b7280; --line:#e4e0d6; --line2:#efece5;
+  --accent:#2f5d50; --accent-2:#e7efe9; --gold:#a8834a; --neg:#b23b3b; --pos:#2f6b45; --warn:#9a6b10; --warn-bg:#fff6e0;
+  --calc:#f3f0e8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:#fff;padding:18px 28px 0}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{font:600 22px "IBM Plex Serif",serif;margin:0;letter-spacing:.2px}
+.brand .sub{color:#b9c0cc;font-size:13px}
+nav{display:flex;gap:2px;margin-top:14px}
+nav button{background:none;border:0;color:#b9c0cc;padding:10px 16px;font:500 14px inherit;font-family:inherit;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-bottom-color:var(--gold)}
+nav button:hover{color:#fff}
+main{padding:22px 28px 60px;max-width:1700px;margin:0 auto}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600}
+select,input,textarea{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 9px;color:var(--ink)}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--accent-2);border-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:7px 12px;font:inherit;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--accent);color:#fff}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:7px 14px;font:500 14px inherit;font-family:inherit;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--accent)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.danger{border-color:var(--neg);color:var(--neg);background:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600}
+.kpi .v{font:600 22px "IBM Plex Sans";margin-top:4px}
+.kpi .s{font-size:12px;color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff;max-height:calc(100vh - 290px)}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{padding:7px 12px;border-bottom:1px solid var(--line2);white-space:nowrap;text-align:right}
+th{background:#faf8f3;font-size:12px;font-weight:600;color:var(--muted);position:sticky;top:0;z-index:2}
+thead tr.g th{top:0;color:var(--ink);font-size:12.5px;border-bottom:1px solid var(--line)}
+thead tr.h th{top:33px}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:inherit;z-index:1}
+thead th:first-child{z-index:3;background:#faf8f3}
+tbody tr{background:#fff}
+tbody tr.calc{background:var(--calc)}
+tbody tr.calc td{font-weight:600}
+tbody tr.calc.big td{font-weight:700;border-top:2px solid var(--ink)}
+tbody tr.sub td{color:#454b57;font-size:13px}
+tbody tr.sub td:first-child{padding-left:38px}
+tbody tr.cat td{font-size:12.5px;color:var(--gold);font-weight:600}
+tbody tr.cat td:first-child{padding-left:26px}
+tbody tr.warn{background:var(--warn-bg)}
+tbody tr.extra td{color:#454b57;font-style:italic}
+td.tot,th.tot{background:#f7f5ef;font-weight:600}
+td.pctc,th.pctc{color:var(--accent);font-size:12px;min-width:64px;padding-left:4px}
+td.num:not(.pctc){padding-right:6px}
+td.pctc.sep,th.pctc.sep{border-right:1px solid var(--line2)}
+td.pctc.neg{color:var(--neg)}
+tbody tr.calc td.tot{background:#ebe6da}
+.num.neg{color:var(--neg)}
+.rlabel{display:flex;align-items:center;gap:8px}
+.rlabel .n{color:var(--gold);font-weight:700;width:18px;display:inline-block}
+.tg{cursor:pointer;user-select:none}
+.tg .car{display:inline-block;width:10px;color:var(--muted);transition:transform .15s}
+.tg.open .car{transform:rotate(90deg)}
+.pct{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+.banner{padding:9px 14px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.banner.warn{background:var(--warn-bg);color:var(--warn);border:1px solid #f0d9a4}
+.banner.info{background:var(--accent-2);color:var(--accent);border:1px solid #cfe0d5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr}}
+h2{font:600 17px "IBM Plex Serif",serif;margin:0 0 12px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:18px 0 8px}
+.formrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+table.list td,table.list th{text-align:left}
+table.list td.r,table.list th.r{text-align:right}
+table.list input,table.list select{padding:4px 6px;font-size:13px}
+table.list td{padding:5px 10px}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;background:var(--line2);color:#454b57}
+.pill.sin{background:var(--warn-bg);color:var(--warn)}
+.empty{padding:50px;text-align:center;color:var(--muted)}
+.muted{color:var(--muted)}
+details.pond{margin-bottom:16px;padding:12px 18px}
+details.pond summary{cursor:pointer;font-size:13.5px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+.status{font-size:12px;color:#b9c0cc;margin-left:auto}
+.dlg{position:fixed;inset:0;background:rgba(20,24,32,.45);display:none;align-items:center;justify-content:center;z-index:40}
+.dlg.on{display:flex}
+.dlg .box{background:#fff;border-radius:12px;padding:20px;min-width:340px;max-width:560px}
+textarea.code{width:100%;height:200px;font:12px ui-monospace,monospace}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Seguimiento de Cierre Económico</h1>
+    <span class="sub" id="hdrSub">Estado de resultados por firma y actividad · USD</span>
+    <span class="status" id="status">Conectando…</span>
+    <button id="btnNov" style="background:none;border:1px solid #47506a;color:#d8dde6;border-radius:6px;padding:4px 10px;font:12.5px inherit;font-family:inherit;cursor:pointer">Novedades · v<span id="verTxt"></span></button>
+  </div>
+  <nav id="nav">
+    <button data-t="er" class="on">Estado de resultados</button>
+    <button data-t="carga">Carga de conceptos</button>
+    <button data-t="plan">Plan de cuentas</button>
+    <button data-t="maestros">Campañas, firmas y actividades</button>
+    <button data-t="datos">Exportar / importar</button>
+  </nav>
+</header>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<div class="dlg" id="dlg"><div class="box" id="dlgBox"></div></div>
+
+<script>
+/* ===================== Versión y novedades ===================== */
+const APP_VERSION = "1.4.0";
+const NOVEDADES = [
+  {v:"1.4.0", f:"12/11/2026", items:["Cada actividad muestra su propio % sobre ventas al lado del importe: la estructura de costos de cada unidad de negocio se lee directo.","Selector «Mostrar»: USD y %, solo USD o solo %."]},
+  {v:"1.3.0", f:"12/11/2026", items:["Versión instalable para Windows (Cierre Cignetti), con actualizaciones automáticas al abrir.","Al ingresar se muestran las novedades de cada versión. También podés verlas desde el botón «Novedades»."]},
+  {v:"1.2.0", f:"12/11/2026", items:["Asignación de la estructura general a cada unidad de negocio según su % de facturación sobre la facturación total del grupo (o de cada firma).","Tabla de ponderadores con la facturación, el % y los costos asignados a cada unidad."]},
+  {v:"1.1.0", f:"12/11/2026", items:["Columna «% s/ ventas» para cada partida, en el total del grupo, en cada firma y en el detalle por cuenta.","La comparación entre campañas y la exportación a Excel incluyen los porcentajes."]},
+  {v:"1.0.0", f:"12/11/2026", items:["Estado de resultados por firma y actividad con la estructura Ventas → Margen neto.","Carga manual de conceptos y pegado desde Excel; plan de cuentas con asignación a rubros.","Cierre de la campaña 25/26 cargado y conciliado con el informe institucional."]},
+];
+const cmpV=(a,b)=>{const x=a.split(".").map(Number),y=b.split(".").map(Number);for(let i=0;i<3;i++){const d=(x[i]||0)-(y[i]||0);if(d)return Math.sign(d);}return 0;};
+function verNovedades(todas){
+  let visto=null; try{ visto=localStorage.getItem("cierre-version-vista"); }catch(e){}
+  const lista = todas||!visto ? NOVEDADES : NOVEDADES.filter(n=>cmpV(n.v,visto)>0);
+  if(!lista.length) return;
+  $("#dlgBox").innerHTML=`<h2 style="margin-bottom:4px">Novedades${!todas&&visto?" desde tu último ingreso":""}</h2>
+    <div class="muted" style="font-size:12.5px;margin-bottom:12px">Versión actual ${APP_VERSION}</div>
+    <div style="max-height:60vh;overflow:auto">${lista.map(n=>`<div style="margin-bottom:14px"><div style="font-weight:600">Versión ${n.v} <span class="muted" style="font-weight:400">· ${n.f}</span></div><ul style="margin:6px 0 0 18px;padding:0">${n.items.map(i=>`<li style="margin-bottom:4px">${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>
+    <div style="text-align:right;margin-top:10px"><button class="btn" id="dlgOk">Entendido</button></div>`;
+  $("#dlg").classList.add("on");
+  $("#dlgOk").addEventListener("click",()=>{ $("#dlg").classList.remove("on"); try{ localStorage.setItem("cierre-version-vista",APP_VERSION); }catch(e){} });
+}
+
+/* ===================== Constantes ===================== */
+const RUBROS = [
+  {id:"ventas", n:1, nombre:"Ventas", signo:1},
+  {id:"costo_ventas", n:2, nombre:"Costo de ventas", signo:-1},
+  {id:"estructura", n:4, nombre:"Costos de estructura", signo:-1},
+  {id:"intereses", n:6, nombre:"Intereses financieros", signo:-1},
+  {id:"amortizaciones", n:7, nombre:"Amortizaciones de bienes de uso", signo:-1},
+  {id:"impuestos", n:8, nombre:"Impuestos", signo:-1},
+  {id:"retiros", n:9, nombre:"Retiros", signo:-1},
+  {id:"tenencia", n:"", nombre:"Resultado por tenencia", signo:1},
+  {id:"sin_asignar", n:"", nombre:"Sin asignar", signo:-1},
+];
+const RB = Object.fromEntries(RUBROS.map(r=>[r.id,r]));
+const CATS_DEFAULT = ["Gerenciamiento","Inmobiliario","Administración","Directos fijos"];
+
+/* ===================== Estado ===================== */
+let M = {firmas:[],actividades:[],campanas:[],categorias:CATS_DEFAULT.slice()};
+let P = {cuentas:[]};
+let CAMPS = {};  // id -> {lineas:[]}
+const ui = {tab:"er", camp:null, firma:"all", vista:"actividad", modo:"both", prorrateo:"fact_grupo", pondOpen:true, comp:"", open:new Set(),
+  cf:{firma:"all",act:"all",rubro:"all",q:""}};
+let store = null;   // adaptador de persistencia
+let loaded = {m:false,p:false,c:false};
+
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt0 = new Intl.NumberFormat("es-AR",{maximumFractionDigits:0,minimumFractionDigits:0});
+const fmt2 = new Intl.NumberFormat("es-AR",{maximumFractionDigits:2,minimumFractionDigits:2});
+const fnum = (v,d0=true)=>{ if(v===null||v===undefined||isNaN(v)) return "–"; if(Math.abs(v)<0.005) return "–"; return (d0?fmt0:fmt2).format(v); };
+const fpct = v=> (v===null||!isFinite(v))?"–":(v*100).toLocaleString("es-AR",{maximumFractionDigits:1,minimumFractionDigits:1})+"%";
+const slug = s=>String(s).normalize("NFKD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||("x"+Date.now());
+const uid = ()=> "l"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove("on"),2200);}
+function parseNum(s){ if(typeof s==="number") return s; s=String(s).trim().replace(/\s/g,"").replace(/USD|\$/gi,"");
+  let neg=false; if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1);}
+  if(s.includes(",")&&s.includes(".")){ if(s.lastIndexOf(",")>s.lastIndexOf(".")) s=s.replace(/\./g,"").replace(",","."); else s=s.replace(/,/g,""); }
+  else if(s.includes(",")){ const p=s.split(","); s = (p.length===2 && p[1].length!==3) ? s.replace(",",".") : s.replace(/,/g,""); }
+  else if((s.match(/\./g)||[]).length>1) s=s.replace(/\./g,"");
+  const v=parseFloat(s); return isNaN(v)?NaN:(neg?-v:v); }
+
+const cuentaById = id => P.cuentas.find(c=>c.id===id);
+const firmaN = id => (M.firmas.find(f=>f.id===id)||{}).nombre||id;
+const actById = id => M.actividades.find(a=>a.id===id);
+const actN = id => (actById(id)||{}).nombre||id;
+const rubroDe = l => { const c=cuentaById(l.c); return c&&RB[c.rubro]?c.rubro:"sin_asignar"; };
+const catDe = l => { const c=cuentaById(l.c); return (c&&c.cat)||"Sin categoría"; };
+const lineasDe = id => (CAMPS[id]&&CAMPS[id].lineas)||[];
+
+/* ===================== Persistencia ===================== */
+const queues = {};
+function enqueue(path, fn){ const q=(queues[path]||Promise.resolve()).then(fn).catch(e=>{console.error(e); toast("No se pudo guardar: "+(e.code||e.message||e)); if(e&&e.code==="invalid_argument") readOnly=true;}); queues[path]=q; return q; }
+let readOnly=false;
+
+function localAdapter(){
+  const K="cierre-grupo-v1";
+  let data={}; try{data=JSON.parse(localStorage.getItem(K)||"{}");}catch(e){}
+  const persist=()=>{try{localStorage.setItem(K,JSON.stringify(data));}catch(e){}};
+  return {
+    kind:"local",
+    start(){ M=Object.assign(M,data.maestros||{}); P=data.plan||P; CAMPS=data.camps||{}; loaded={m:true,p:true,c:true}; render(); },
+    saveMaestros(){ data.maestros=M; persist(); },
+    savePlan(){ data.plan=P; persist(); },
+    saveCamp(id){ data.camps=CAMPS; persist(); },
+    deleteCamp(id){ delete CAMPS[id]; data.camps=CAMPS; persist(); },
+  };
+}
+function dbAdapter(db){
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  return {
+    kind:"db",
+    start(){
+      const timer=setTimeout(()=>{ if(!(loaded.m&&loaded.p&&loaded.c)) setStatus("La base no responde todavía; los datos pueden no estar al día",true); },10000);
+      const done=()=>{ if(loaded.m&&loaded.p&&loaded.c){ clearTimeout(timer); setStatus("Guardado en la nube"); } render(); };
+      const err=e=>{ clearTimeout(timer); setStatus("Error de conexión: "+(e.code||""),true); };
+      db.doc("config/maestros").onSnapshot(s=>{ if(s.exists){ const d=s.data(); M={firmas:d.firmas||[],actividades:d.actividades||[],campanas:d.campanas||[],categorias:d.categorias||CATS_DEFAULT.slice()}; } if(!s.metadata.fromCache) loaded.m=true; done(); },err);
+      db.doc("config/plan").onSnapshot(s=>{ if(s.exists) P={cuentas:(s.data().cuentas||[])}; if(!s.metadata.fromCache) loaded.p=true; done(); },err);
+      db.collection("campanas").onSnapshot(q=>{ const o={}; q.docs.forEach(d=>{o[d.id]=d.data();}); CAMPS=o; if(!q.metadata.fromCache) loaded.c=true; done(); },err);
+    },
+    saveMaestros(){ const d=clone(M); return enqueue("m",()=>db.doc("config/maestros").set(d)); },
+    savePlan(){ const d=clone(P); return enqueue("p",()=>db.doc("config/plan").set(d)); },
+    saveCamp(id){ const d=clone(CAMPS[id]||{lineas:[]}); return enqueue("c/"+id,()=>db.doc("campanas/"+id).set(d)); },
+    deleteCamp(id){ delete CAMPS[id]; return enqueue("c/"+id,()=>db.doc("campanas/"+id).delete()); },
+  };
+}
+function setStatus(t,warn){ const e=$("#status"); e.textContent=t; e.style.color=warn?"#f3c56b":"#b9c0cc"; }
+
+/* ===================== Cálculo del ER ===================== */
+/* Facturación de cada unidad de negocio (firma + actividad): suma de los importes positivos del rubro Ventas
+   (facturación bruta: no resta compras de hacienda, ajustes ni diferencias de inventario). */
+function ponderadores(campId, modo){
+  const L=lineasDe(campId).map(l=>({...l,r:rubroDe(l)}));
+  const fact={};
+  L.forEach(l=>{ if(l.a!=="general" && l.r==="ventas" && l.v>0){ const k=l.f+"|"+l.a; fact[k]=(fact[k]||0)+l.v; } });
+  const units=Object.entries(fact).map(([k,v])=>{ const [f,a]=k.split("|"); return {k,f,a,fact:v}; });
+  const totG=units.reduce((s,u)=>s+u.fact,0);
+  const totF={}; units.forEach(u=>totF[u.f]=(totF[u.f]||0)+u.fact);
+  units.forEach(u=>{ u.pctGrupo=totG?u.fact/totG:0; u.pctFirma=totF[u.f]?u.fact/totF[u.f]:0; u.w = modo==="fact_firma"?u.pctFirma:u.pctGrupo; });
+  const fIds=M.firmas.map(f=>f.id), aIds=M.actividades.map(a=>a.id);
+  units.sort((x,y)=>fIds.indexOf(x.f)-fIds.indexOf(y.f)||aIds.indexOf(x.a)-aIds.indexOf(y.a));
+  return {units,totG,totF};
+}
+function lineasVista(campId){
+  let L = lineasDe(campId).map(l=>({...l, r:rubroDe(l)}));
+  if(ui.prorrateo!=="no"){
+    const {units}=ponderadores(campId,ui.prorrateo);
+    const gen=L.filter(l=>l.a==="general"), out=L.filter(l=>l.a!=="general");
+    gen.forEach(l=>{
+      const dest = ui.prorrateo==="fact_firma" ? units.filter(u=>u.f===l.f) : units;
+      if(!dest.length){ out.push(l); return; }
+      dest.forEach(u=>out.push({...l, f:u.f, a:u.a, fo:l.f, v:l.v*u.w, prorr:true}));
+    });
+    L=out;
+  }
+  if(ui.firma!=="all") L=L.filter(l=>l.f===ui.firma);
+  return L;
+}
+function tablaPonderadores(){
+  const {units,totG,totF}=ponderadores(ui.camp,ui.prorrateo);
+  if(!units.length) return "";
+  const asig={}; lineasVista(ui.camp).filter(l=>l.prorr).forEach(l=>{ const k=l.f+"|"+l.a; asig[k]=(asig[k]||0)+l.v; });
+  const totA=Object.values(asig).reduce((a,b)=>a+b,0);
+  const porFirma = ui.prorrateo==="fact_firma";
+  const rows=units.filter(u=>ui.firma==="all"||u.f===ui.firma);
+  return `<details class="panel pond" ${ui.pondOpen?"open":""} id="pond"><summary><b>Ponderadores de asignación</b> <span class="muted">· ${porFirma?"% de facturación sobre la facturación de su firma":"% de facturación sobre la facturación total del grupo"} · facturación total ${fnum(totG)}</span></summary>
+    <table class="list" style="margin-top:10px;width:auto"><thead><tr><th>Unidad de negocio</th><th>Firma</th><th class="r">Facturación</th><th class="r">% s/ total grupo</th>${porFirma?'<th class="r">% s/ firma</th>':""}<th class="r">Costos asignados</th></tr></thead><tbody>
+    ${rows.map(u=>`<tr><td>${esc(actN(u.a))}</td><td>${esc(firmaN(u.f))}</td><td class="r">${fnum(u.fact)}</td><td class="r"><b>${fpct(u.pctGrupo)}</b></td>${porFirma?`<td class="r"><b>${fpct(u.pctFirma)}</b></td>`:""}<td class="r num ${(asig[u.k]||0)<0?"neg":""}">${fnum(asig[u.k]||0)}</td></tr>`).join("")}
+    ${ui.firma==="all"?`<tr class="calc"><td><b>Total</b></td><td></td><td class="r"><b>${fnum(totG)}</b></td><td class="r"><b>100,0%</b></td>${porFirma?"<td></td>":""}<td class="r num ${totA<0?"neg":""}"><b>${fnum(totA)}</b></td></tr>`:""}
+    </tbody></table>
+    <div class="note">Facturación = importes positivos del rubro Ventas de cada unidad (bruta: en ganadería es la venta de hacienda, sin restar compras, ajustes ni diferencia de inventario). Se reparten todos los conceptos cargados en “Estructura general”: costos de estructura, intereses, impuestos y, si los hubiera, amortizaciones y retiros no imputados a una unidad.</div>
+  </details>`;
+}
+function columnas(L){
+  const ord = (arr,ref)=>arr.sort((a,b)=>ref.indexOf(a)-ref.indexOf(b));
+  const fIds=M.firmas.map(f=>f.id), aIds=M.actividades.map(a=>a.id);
+  if(ui.vista==="firma"){
+    const fs=ord([...new Set(L.map(l=>l.f))],fIds);
+    return {groups:null, cols:fs.map(f=>({key:f,label:firmaN(f),match:l=>l.f===f}))};
+  }
+  if(ui.vista==="grupo"){
+    const gOf=a=>(actById(a)||{}).grupo||"Sin grupo";
+    const gRef=[...new Set(M.actividades.map(a=>a.grupo||"Sin grupo"))];
+    const gs=ord([...new Set(L.map(l=>gOf(l.a)))],gRef);
+    return {groups:null, cols:gs.map(g=>({key:g,label:g,match:l=>gOf(l.a)===g}))};
+  }
+  // por actividad, agrupado por firma
+  const fs=ord([...new Set(L.map(l=>l.f))],fIds);
+  const groups=[], cols=[];
+  fs.forEach(f=>{
+    const as=ord([...new Set(L.filter(l=>l.f===f).map(l=>l.a))],aIds);
+    const sub = as.length>1;
+    groups.push({label:firmaN(f),span:as.length+(sub?1:0),sub});
+    as.forEach(a=>cols.push({key:f+"|"+a,label:actN(a),match:l=>l.f===f&&l.a===a}));
+    if(sub) cols.push({key:f+"|tot",label:"Total firma",match:l=>l.f===f,sub:true});
+  });
+  return {groups,cols};
+}
+function sumR(L,match,r){ let s=0; for(const l of L) if(l.r===r && match(l)) s+=l.v; return s; }
+function calcRows(L,match){
+  const v={}; RUBROS.forEach(r=>v[r.id]=sumR(L,match,r.id));
+  v.cm = v.ventas+v.costo_ventas;
+  v.mb = v.cm+v.estructura;
+  v.mn = v.mb+v.intereses+v.amortizaciones+v.impuestos+v.retiros+v.sin_asignar;
+  v.rt = v.mn+v.tenencia;
+  return v;
+}
+function rowDefs(L){
+  const hasSin = L.some(l=>l.r==="sin_asignar");
+  const rows=[
+    {k:"ventas",lbl:"Ventas",n:1,exp:true},
+    {k:"costo_ventas",lbl:"Costo de ventas",n:2,exp:true},
+    {k:"cm",lbl:"Contribución marginal",n:3,calc:true},
+    {k:"estructura",lbl:"Costos de estructura",n:4,exp:true,byCat:true},
+    {k:"mb",lbl:"Margen bruto",n:5,calc:true},
+    {k:"intereses",lbl:"Intereses financieros",n:6,exp:true},
+    {k:"amortizaciones",lbl:"Amortizaciones de bienes de uso",n:7,exp:true},
+    {k:"impuestos",lbl:"Impuestos",n:8,exp:true},
+    {k:"retiros",lbl:"Retiros",n:9,exp:true},
+  ];
+  if(hasSin) rows.push({k:"sin_asignar",lbl:"⚠ Conceptos sin asignar a rubro",n:"",exp:true,warn:true});
+  rows.push({k:"mn",lbl:"Margen neto",n:10,calc:true,big:true});
+  rows.push({k:"tenencia",lbl:"Resultado por tenencia",n:"",exp:true,extra:true});
+  rows.push({k:"rt",lbl:"Resultado incluyendo tenencia",n:"",calc:true});
+  return rows;
+}
+
+/* ===================== Render ===================== */
+function render(){
+  if(!ui.camp || !M.campanas.find(c=>c.id===ui.camp)) ui.camp = (M.campanas[M.campanas.length-1]||{}).id||null;
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===ui.tab));
+  const fn={er:renderER,carga:renderCarga,plan:renderPlan,maestros:renderMaestros,datos:renderDatos}[ui.tab];
+  const keepScroll = document.querySelector(".tablewrap")?.scrollLeft||0;
+  fn();
+  const tw=document.querySelector(".tablewrap"); if(tw) tw.scrollLeft=keepScroll;
+}
+function campSelect(id,val,withEmpty){
+  return `<select id="${id}">${withEmpty?`<option value="">${withEmpty}</option>`:""}${M.campanas.map(c=>`<option value="${esc(c.id)}" ${c.id===val?"selected":""}>${esc(c.nombre)}</option>`).join("")}</select>`;
+}
+function firmaOpts(val,all){ return (all?`<option value="all">Todas las firmas</option>`:"")+M.firmas.map(f=>`<option value="${esc(f.id)}" ${f.id===val?"selected":""}>${esc(f.nombre)}</option>`).join(""); }
+function actOpts(val,all){ return (all?`<option value="all">Todas las actividades</option>`:"")+M.actividades.map(a=>`<option value="${esc(a.id)}" ${a.id===val?"selected":""}>${esc(a.nombre)}</option>`).join(""); }
+function rubroOpts(val){ return RUBROS.map(r=>`<option value="${r.id}" ${r.id===val?"selected":""}>${r.n?r.n+". ":""}${r.nombre}</option>`).join(""); }
+function catOpts(val){ return `<option value="">—</option>`+M.categorias.map(c=>`<option ${c===val?"selected":""}>${esc(c)}</option>`).join(""); }
+function seg(id,opts,val){ return `<div class="seg" data-seg="${id}">${opts.map(([v,t])=>`<button data-v="${v}" class="${v===val?"on":""}">${t}</button>`).join("")}</div>`; }
+
+function emptyState(){
+  $("#main").innerHTML = `<div class="panel empty">${loaded.m?`<h2>Todavía no hay campañas cargadas</h2><p>Creá una campaña en <b>Campañas, firmas y actividades</b> o importá un archivo JSON en <b>Exportar / importar</b>.</p>`:`<p>Cargando datos…</p>`}</div>`;
+}
+
+function renderER(){
+  if(!ui.camp){ emptyState(); return; }
+  const camp=M.campanas.find(c=>c.id===ui.camp);
+  const L=lineasVista(ui.camp);
+  const comp = ui.comp && ui.comp!==ui.camp ? ui.comp : "";
+  let h=`<div class="bar">
+    <div class="fld"><label>Campaña</label>${campSelect("selCamp",ui.camp)}</div>
+    <div class="fld"><label>Firma</label><select id="selFirma">${firmaOpts(ui.firma,true)}</select></div>
+    <div class="fld"><label>Columnas</label>${seg("vista",[["actividad","Firma › actividad"],["grupo","Tipo de actividad"],["firma","Firma"]],ui.vista)}</div>
+    <div class="fld"><label>Mostrar</label>${seg("modo",[["both","USD y % s/ ventas"],["usd","Solo USD"],["pct","Solo %"]],ui.modo)}</div>
+    <div class="fld"><label>Asignación de estructura general</label>${seg("prorrateo",[["fact_grupo","Por facturación del grupo"],["fact_firma","Por facturación de cada firma"],["no","Sin asignar"]],ui.prorrateo)}</div>
+    <div class="fld"><label>Comparar con</label>${campSelect("selComp",comp,"— sin comparar —")}</div>
+  </div>`;
+  if(camp&&camp.nota) h+=`<div class="note" style="margin:-6px 0 12px">${esc(camp.nota)}</div>`;
+  if(!L.length){ $("#main").innerHTML=h+`<div class="panel empty">No hay conceptos cargados para esta campaña${ui.firma!=="all"?" y firma":""}. Cargalos en <b>Carga de conceptos</b>.</div>`; bindER(); return; }
+
+  const T=calcRows(L,()=>true);
+  const kp=(k,v,s)=>`<div class="kpi"><div class="k">${k}</div><div class="v ${v<0?"num neg":""}">${fnum(v)}</div><div class="s">${s||""}</div></div>`;
+  h+=`<div class="kpis">
+    ${kp("Ventas",T.ventas,"USD")}
+    ${kp("Contribución marginal",T.cm,fpct(T.ventas?T.cm/T.ventas:null)+" s/ ventas")}
+    ${kp("Margen bruto",T.mb,fpct(T.ventas?T.mb/T.ventas:null)+" s/ ventas")}
+    ${kp("Margen neto",T.mn,fpct(T.ventas?T.mn/T.ventas:null)+" s/ ventas")}
+    ${kp("Resultado incl. tenencia",T.rt,"Tenencia: "+fnum(T.tenencia))}
+  </div>`;
+  if(L.some(l=>l.r==="sin_asignar")) h+=`<div class="banner warn">Hay conceptos sin rubro asignado. Asignalos en <b>Plan de cuentas</b> para que impacten en la línea correcta.</div>`;
+
+  if(ui.prorrateo!=="no") h+=tablaPonderadores();
+  h += comp ? tablaComparativa(L,comp) : tablaER(L);
+  h+=`<div class="note">Convención de signos: ingresos positivos, egresos negativos. Hacé clic en un rubro para ver el detalle por concepto. ${ui.prorrateo==="fact_grupo"?"Los costos de “Estructura general” de todo el grupo se asignan a cada unidad de negocio según su % de facturación sobre la facturación total. Con este criterio, las columnas por firma muestran el resultado de sus unidades después de absorber la estructura del grupo, que no es el resultado propio de la sociedad: para verlo, usá “Por facturación de cada firma” o “Sin asignar”.":ui.prorrateo==="fact_firma"?"Los costos de “Estructura general” de cada firma se asignan a sus unidades de negocio según su % de facturación sobre la facturación de la firma.":""}</div>`;
+  $("#main").innerHTML=h; bindER();
+}
+function cell(v,ventas,cls=""){ const neg=v<-0.004?" neg":""; return `<td class="num${neg} ${cls}">${fnum(v)}</td>`; }
+// Cada columna del ER: importe y/o % sobre las ventas de esa misma columna (actividad, firma o total).
+const nPer=()=>ui.modo==="both"?2:1;
+function par(v,ventas,cls=""){ return (ui.modo!=="pct"?cell(v,ventas,cls):"")+(ui.modo!=="usd"?pcell(v,ventas,cls+" sep"):""); }
+function hpar(label,cls=""){ return (ui.modo!=="pct"?`<th class="${cls}">${esc(label)}</th>`:"")+(ui.modo!=="usd"?`<th class="${cls} pctc sep">${ui.modo==="pct"?esc(label)+"<br>":""}% s/ vtas</th>`:""); }
+function pcell(v,ventas,cls=""){ const p=(ventas&&Math.abs(v)>=0.005)? v/ventas : null; const neg=(p!==null&&p<-0.00005)?" neg":""; return `<td class="num pctc${neg} ${cls}">${fpct(p)}</td>`; }
+function detalleRows(L,r,cols,byCat){
+  const items=L.filter(l=>l.r===r.k);
+  const conceptos=[...new Set(items.map(l=>l.c))];
+  const tot=c=>items.filter(l=>l.c===c).reduce((a,l)=>a+l.v,0);
+  conceptos.sort((a,b)=>tot(a)-tot(b));
+  const vent=cols.map(c=>sumR(L,c.match,"ventas")), ventT=sumR(L,()=>true,"ventas");
+  const line=(lbl,pred,cls)=>{ const tv=items.filter(pred).reduce((a,l)=>a+l.v,0);
+    return `<tr class="${cls}"><td>${lbl}</td>${cols.map((c,i)=>{ const v=items.filter(l=>pred(l)&&c.match(l)).reduce((a,l)=>a+l.v,0); return par(v,vent[i],c.sub?"tot":""); }).join("")}${par(tv,ventT,"tot")}</tr>`; };
+  let h="";
+  if(byCat){
+    const cats=[...new Set(items.map(catDe))].sort((a,b)=>{const ia=M.categorias.indexOf(a),ib=M.categorias.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+    cats.forEach(cat=>{
+      h+=line(esc(cat),l=>catDe(l)===cat,"cat");
+      conceptos.filter(c=>items.some(l=>l.c===c&&catDe(l)===cat)).forEach(c=>{ h+=line(esc((cuentaById(c)||{nombre:c}).nombre),l=>l.c===c&&catDe(l)===cat,"sub"); });
+    });
+  } else conceptos.forEach(c=>{ h+=line(esc((cuentaById(c)||{nombre:c}).nombre),l=>l.c===c,"sub"); });
+  if(!items.length) h+=`<tr class="sub"><td class="muted">Sin conceptos cargados</td>${cols.map(c=>`<td class="${c.sub?"tot":""}"></td>`.repeat(nPer())).join("")}${'<td class="tot"></td>'.repeat(nPer())}</tr>`;
+  return h;
+}
+function tablaER(L){
+  const {groups,cols}=columnas(L);
+  const V=cols.map(c=>calcRows(L,c.match)), T=calcRows(L,()=>true);
+  let h=`<div class="tablewrap"><table><thead>`;
+  if(groups) h+=`<tr class="g"><th></th>${groups.map(g=>`<th colspan="${g.span*nPer()}" style="text-align:center;border-left:1px solid var(--line)">${esc(g.label)}</th>`).join("")}<th class="tot" colspan="${nPer()}"></th></tr>`;
+  h+=`<tr class="${groups?"h":""}"><th>Concepto</th>${cols.map(c=>hpar(c.label,c.sub?"tot":"")).join("")}${hpar("Total","tot")}</tr></thead><tbody>`;
+  rowDefs(L).forEach(r=>{
+    const open=ui.open.has(r.k);
+    const cls=[r.calc?"calc":"",r.big?"big":"",r.warn?"warn":"",r.extra?"extra":""].join(" ");
+    const lbl=`<span class="rlabel ${r.exp?"tg"+(open?" open":""):""}" ${r.exp?`data-tg="${r.k}"`:""}>${r.exp?'<span class="car">▸</span>':'<span class="car"></span>'}<span class="n">${r.n}</span>${esc(r.lbl)}</span>`;
+    h+=`<tr class="${cls}"><td>${lbl}</td>${cols.map((c,i)=>par(V[i][r.k],V[i].ventas,c.sub?"tot":"")).join("")}${par(T[r.k],T.ventas,"tot")}</tr>`;
+    if(r.exp&&open) h+=detalleRows(L,r,cols,r.byCat);
+  });
+  return h+`</tbody></table></div>`;
+}
+function tablaComparativa(L,comp){
+  const L2=lineasVista(comp);
+  const A=calcRows(L,()=>true), B=calcRows(L2,()=>true);
+  const nA=(M.campanas.find(c=>c.id===ui.camp)||{}).nombre, nB=(M.campanas.find(c=>c.id===comp)||{}).nombre;
+  let h=`<div class="tablewrap"><table><thead><tr><th>Concepto</th><th>${esc(nA)}</th><th class="pctc">% s/ ventas</th><th>${esc(nB)}</th><th class="pctc">% s/ ventas</th><th class="tot">Variación USD</th><th class="tot">Variación %</th></tr></thead><tbody>`;
+  const row=(lbl,a,b,cls)=>{ const d=a-b; const p=Math.abs(b)>0.01? d/Math.abs(b):null;
+    return `<tr class="${cls}"><td>${lbl}</td>${cell(a,A.ventas)}${pcell(a,A.ventas)}${cell(b,B.ventas)}${pcell(b,B.ventas)}<td class="num tot ${d<0?"neg":""}">${fnum(d)}</td><td class="num tot ${d<0?"neg":""}">${fpct(p)}</td></tr>`; };
+  rowDefs([...L,...L2]).forEach(r=>{
+    const open=ui.open.has(r.k);
+    const cls=[r.calc?"calc":"",r.big?"big":"",r.warn?"warn":"",r.extra?"extra":""].join(" ");
+    const lbl=`<span class="rlabel ${r.exp?"tg"+(open?" open":""):""}" ${r.exp?`data-tg="${r.k}"`:""}>${r.exp?'<span class="car">▸</span>':'<span class="car"></span>'}<span class="n">${r.n}</span>${esc(r.lbl)}</span>`;
+    h+=row(lbl,A[r.k],B[r.k],cls);
+    if(r.exp&&open){
+      const cs=[...new Set([...L,...L2].filter(l=>l.r===r.k).map(l=>l.c))];
+      cs.forEach(c=>{ const a=L.filter(l=>l.r===r.k&&l.c===c).reduce((s,l)=>s+l.v,0), b=L2.filter(l=>l.r===r.k&&l.c===c).reduce((s,l)=>s+l.v,0);
+        h+=row(esc((cuentaById(c)||{nombre:c}).nombre),a,b,"sub"); });
+    }
+  });
+  return h+`</tbody></table></div>`;
+}
+function bindSeg(){ document.querySelectorAll("[data-seg]").forEach(s=>s.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; ui[s.dataset.seg]=b.dataset.v; render(); })); }
+function bindER(){
+  bindSeg();
+  $("#selCamp")?.addEventListener("change",e=>{ui.camp=e.target.value;render();});
+  $("#selFirma")?.addEventListener("change",e=>{ui.firma=e.target.value;render();});
+  $("#selComp")?.addEventListener("change",e=>{ui.comp=e.target.value;render();});
+  $("#pond")?.addEventListener("toggle",e=>{ui.pondOpen=e.target.open;});
+  document.querySelectorAll("[data-tg]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.tg; ui.open.has(k)?ui.open.delete(k):ui.open.add(k); render(); }));
+}
+
+/* ===================== Carga ===================== */
+function renderCarga(){
+  if(!ui.camp){ emptyState(); return; }
+  const cf=ui.cf;
+  let all=lineasDe(ui.camp).map(l=>({...l,r:rubroDe(l)}));
+  let L=all.filter(l=>(cf.firma==="all"||l.f===cf.firma)&&(cf.act==="all"||l.a===cf.act)&&(cf.rubro==="all"||l.r===cf.rubro)&&(!cf.q||((cuentaById(l.c)||{}).nombre||l.c).toLowerCase().includes(cf.q.toLowerCase())||(l.d||"").toLowerCase().includes(cf.q.toLowerCase())));
+  let h=`<div class="bar"><div class="fld"><label>Campaña</label>${campSelect("selCamp",ui.camp)}</div></div>
+  <div class="grid2">
+   <div class="panel"><h2>Cargar un concepto</h2>
+    <div class="formrow">
+      <div class="fld"><label>Firma</label><select id="nF">${firmaOpts(ui.lastF||M.firmas[0]?.id)}</select></div>
+      <div class="fld"><label>Actividad</label><select id="nA">${actOpts(ui.lastA||M.actividades[0]?.id)}</select></div>
+    </div>
+    <div class="formrow" style="margin-top:10px">
+      <div class="fld" style="flex:1;min-width:240px"><label>Concepto (cuenta)</label><input id="nC" list="dlC" placeholder="Escribí o elegí una cuenta…" autocomplete="off"><datalist id="dlC">${P.cuentas.map(c=>`<option value="${esc(c.nombre)}">`).join("")}</datalist></div>
+    </div>
+    <div id="nInfo" class="note" style="margin-top:6px"></div>
+    <div class="formrow" id="nNuevo" style="display:none;margin-top:6px">
+      <div class="fld"><label>Rubro de la cuenta nueva</label><select id="nR">${rubroOpts("estructura")}</select></div>
+      <div class="fld"><label>Clasificación estructura</label><select id="nCat">${catOpts("Administración")}</select></div>
+    </div>
+    <div class="formrow" style="margin-top:10px">
+      <div class="fld"><label>Tipo</label>${seg("nTipo",[["e","Egreso"],["i","Ingreso"]],ui.nTipo||"e")}</div>
+      <div class="fld"><label>Importe USD</label><input id="nV" inputmode="decimal" placeholder="0,00" style="width:150px"></div>
+      <div class="fld" style="flex:1;min-width:160px"><label>Detalle (opcional)</label><input id="nD"></div>
+      <button class="btn" id="nAdd">Agregar</button>
+    </div>
+   </div>
+   <div class="panel"><h2>Pegar desde Excel</h2>
+     <div class="note" style="margin-top:0">Columnas en este orden, separadas por tabulación (copiar y pegar desde Excel): <b>Firma · Actividad · Concepto · Importe</b> (opcional: Detalle). Firma y actividad por nombre. Cuentas nuevas quedan “Sin asignar” hasta que les asignes rubro.</div>
+     <textarea id="pTxt" class="code" style="height:120px;margin-top:8px" placeholder="Soc. Pedro y Jorge	Soja	Herbicidas	-211628,29"></textarea>
+     <div class="formrow" style="margin-top:8px">
+       <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="pSigno" checked> Los importes vienen en positivo: aplicar el signo según el rubro de la cuenta</label>
+       <button class="btn" id="pGo">Importar filas</button>
+     </div>
+     <div id="pMsg" class="note"></div>
+   </div>
+  </div>
+  <h3>Conceptos cargados en la campaña (${all.length})</h3>
+  <div class="bar">
+    <select id="fF">${firmaOpts(cf.firma,true)}</select>
+    <select id="fA">${actOpts(cf.act,true)}</select>
+    <select id="fR"><option value="all">Todos los rubros</option>${rubroOpts(cf.rubro)}</select>
+    <input id="fQ" placeholder="Buscar concepto…" value="${esc(cf.q)}">
+    <span class="muted" style="margin-left:auto">${L.length} filas · suma ${fnum(L.reduce((a,l)=>a+l.v,0),false)}</span>
+  </div>
+  <div class="tablewrap" style="max-height:none"><table class="list"><thead><tr><th>Firma</th><th>Actividad</th><th>Concepto</th><th>Rubro</th><th>Detalle</th><th class="r">Importe USD</th><th></th></tr></thead><tbody>
+  ${L.map(l=>`<tr data-id="${l.id}">
+     <td><select data-e="f">${firmaOpts(l.f)}</select></td>
+     <td><select data-e="a">${actOpts(l.a)}</select></td>
+     <td>${esc((cuentaById(l.c)||{nombre:l.c}).nombre)}</td>
+     <td><span class="pill ${l.r==="sin_asignar"?"sin":""}">${esc(RB[l.r].nombre)}</span></td>
+     <td><input data-e="d" value="${esc(l.d||"")}" style="width:160px"></td>
+     <td class="r"><input data-e="v" value="${fmt2.format(l.v)}" style="width:130px;text-align:right" class="${l.v<0?"num neg":""}"></td>
+     <td><button class="btn sm danger" data-del>Quitar</button></td></tr>`).join("")}
+  </tbody></table></div>`;
+  $("#main").innerHTML=h;
+  bindSeg();
+  $("#selCamp").addEventListener("change",e=>{ui.camp=e.target.value;render();});
+  const info=()=>{ const n=$("#nC").value.trim(); const c=P.cuentas.find(x=>x.nombre.toLowerCase()===n.toLowerCase());
+    if(!n){ $("#nInfo").textContent=""; $("#nNuevo").style.display="none"; return; }
+    if(c){ $("#nInfo").innerHTML=`Se imputa a <b>${esc(RB[c.rubro]?.nombre||"Sin asignar")}</b>${c.cat?" · "+esc(c.cat):""}`; $("#nNuevo").style.display="none";
+      const t=RB[c.rubro]?.signo>0?"i":"e"; ui.nTipo=t; document.querySelectorAll('[data-seg="nTipo"] button').forEach(b=>b.classList.toggle("on",b.dataset.v===t)); }
+    else { $("#nInfo").innerHTML=`Cuenta nueva: elegí a qué rubro se asigna.`; $("#nNuevo").style.display="flex"; } };
+  $("#nC").addEventListener("input",info);
+  $("#nAdd").addEventListener("click",()=>{
+    const f=$("#nF").value,a=$("#nA").value,n=$("#nC").value.trim(); let v=parseNum($("#nV").value);
+    if(!n||isNaN(v)){ toast("Completá concepto e importe"); return; }
+    let c=P.cuentas.find(x=>x.nombre.toLowerCase()===n.toLowerCase());
+    if(!c){ c={id:uniqueCuentaId(n),nombre:n,rubro:$("#nR").value,cat:$("#nCat").value}; P.cuentas.push(c); store.savePlan(); }
+    v=Math.abs(v)*((ui.nTipo||"e")==="i"?1:-1);
+    addLineas([{id:uid(),f,a,c:c.id,v:Math.round(v*100)/100,d:$("#nD").value.trim()}]);
+    ui.lastF=f; ui.lastA=a; toast("Concepto agregado"); render(); $("#nC").focus();
+  });
+  $("#pGo").addEventListener("click",importarPegado);
+  const fset=(k,v)=>{ui.cf[k]=v;render();};
+  $("#fF").addEventListener("change",e=>fset("firma",e.target.value));
+  $("#fA").addEventListener("change",e=>fset("act",e.target.value));
+  $("#fR").addEventListener("change",e=>fset("rubro",e.target.value));
+  $("#fQ").addEventListener("change",e=>fset("q",e.target.value));
+  document.querySelectorAll("tr[data-id]").forEach(tr=>{
+    const id=tr.dataset.id;
+    tr.querySelectorAll("[data-e]").forEach(inp=>inp.addEventListener("change",()=>{
+      const l=lineasDe(ui.camp).find(x=>x.id===id); if(!l) return; const k=inp.dataset.e;
+      if(k==="v"){ const v=parseNum(inp.value); if(isNaN(v)){toast("Importe inválido");render();return;} l.v=Math.round(v*100)/100; } else l[k]=inp.value;
+      store.saveCamp(ui.camp); render();
+    }));
+    tr.querySelector("[data-del]").addEventListener("click",()=>{ const c=CAMPS[ui.camp]; c.lineas=c.lineas.filter(x=>x.id!==id); store.saveCamp(ui.camp); render(); toast("Concepto quitado"); });
+  });
+}
+function uniqueCuentaId(n){ let b=slug(n),i=b,k=2; while(P.cuentas.some(c=>c.id===i)) i=b+"-"+(k++); return i; }
+function addLineas(arr){ if(!CAMPS[ui.camp]) CAMPS[ui.camp]={lineas:[]}; CAMPS[ui.camp].lineas.push(...arr); store.saveCamp(ui.camp); }
+function findBy(list,txt){ const t=String(txt).trim().toLowerCase(); return list.find(x=>x.id.toLowerCase()===t||x.nombre.toLowerCase()===t); }
+function importarPegado(){
+  const rows=$("#pTxt").value.split(/\r?\n/).map(r=>r.split("\t")).filter(r=>r.join("").trim());
+  const signo=$("#pSigno").checked; const ok=[], err=[]; let nuevas=0;
+  rows.forEach((r,i)=>{
+    if(r.length<4){ err.push(`Fila ${i+1}: faltan columnas`); return; }
+    const f=findBy(M.firmas,r[0]), a=findBy(M.actividades,r[1]); const n=r[2].trim(); let v=parseNum(r[3]);
+    if(!f){ err.push(`Fila ${i+1}: firma “${r[0]}” no existe`); return; }
+    if(!a){ err.push(`Fila ${i+1}: actividad “${r[1]}” no existe`); return; }
+    if(!n||isNaN(v)){ err.push(`Fila ${i+1}: concepto o importe inválido`); return; }
+    let c=P.cuentas.find(x=>x.nombre.toLowerCase()===n.toLowerCase());
+    if(!c){ c={id:uniqueCuentaId(n),nombre:n,rubro:"sin_asignar",cat:""}; P.cuentas.push(c); nuevas++; }
+    if(signo) v=Math.abs(v)*((RB[c.rubro]?.signo??-1));
+    ok.push({id:uid(),f:f.id,a:a.id,c:c.id,v:Math.round(v*100)/100,d:(r[4]||"").trim()});
+  });
+  if(nuevas) store.savePlan();
+  if(ok.length) addLineas(ok);
+  render();
+  $("#pMsg").innerHTML=`${ok.length} filas importadas${nuevas?` · ${nuevas} cuentas nuevas sin asignar`:""}${err.length?`<br><span style="color:var(--neg)">${err.map(esc).join("<br>")}</span>`:""}`;
+}
+
+/* ===================== Plan de cuentas ===================== */
+function renderPlan(){
+  const uso={}; Object.values(CAMPS).forEach(c=>(c.lineas||[]).forEach(l=>{uso[l.c]=(uso[l.c]||0)+1;}));
+  const totCamp={}; lineasDe(ui.camp).forEach(l=>{totCamp[l.c]=(totCamp[l.c]||0)+l.v;});
+  const q=(ui.planQ||"").toLowerCase(), fr=ui.planR||"all";
+  const list=P.cuentas.filter(c=>(!q||c.nombre.toLowerCase().includes(q))&&(fr==="all"||(RB[c.rubro]?c.rubro:"sin_asignar")===fr))
+    .sort((a,b)=>{const ra=RUBROS.findIndex(r=>r.id===a.rubro),rb=RUBROS.findIndex(r=>r.id===b.rubro);return ra-rb||a.nombre.localeCompare(b.nombre);});
+  const sin=P.cuentas.filter(c=>!RB[c.rubro]||c.rubro==="sin_asignar").length;
+  let h=`<div class="panel" style="margin-bottom:14px"><h2>Plan de cuentas y asignación a rubros</h2>
+   <div class="note" style="margin-top:0">Cada concepto del sistema del Grupo se asigna a un rubro del estado de resultados. Si cambiás el rubro de una cuenta, se reclasifica en todas las campañas. La clasificación de estructura (Gerenciamiento, Inmobiliario, Administración, Directos fijos) es la que se usa para abrir la línea 4.</div>
+   ${sin?`<div class="banner warn" style="margin-top:10px">${sin} cuenta(s) sin rubro asignado.</div>`:""}
+   <div class="formrow" style="margin-top:10px">
+     <div class="fld" style="min-width:260px"><label>Nueva cuenta</label><input id="ncN" placeholder="Nombre del concepto"></div>
+     <div class="fld"><label>Rubro</label><select id="ncR">${rubroOpts("estructura")}</select></div>
+     <div class="fld"><label>Clasificación</label><select id="ncC">${catOpts("Administración")}</select></div>
+     <button class="btn" id="ncAdd">Agregar cuenta</button>
+   </div></div>
+   <div class="bar"><input id="pQ" placeholder="Buscar cuenta…" value="${esc(ui.planQ||"")}"><select id="pR"><option value="all">Todos los rubros</option>${rubroOpts(fr)}</select>
+   <span class="muted" style="margin-left:auto">${list.length} de ${P.cuentas.length} cuentas · totales de ${esc((M.campanas.find(c=>c.id===ui.camp)||{}).nombre||"")}</span></div>
+   <div class="tablewrap" style="max-height:none"><table class="list"><thead><tr><th>Cuenta</th><th>Rubro</th><th>Clasificación estructura</th><th class="r">Usos</th><th class="r">Total campaña</th><th></th></tr></thead><tbody>
+   ${list.map(c=>`<tr data-c="${esc(c.id)}"><td><input data-k="nombre" value="${esc(c.nombre)}" style="width:300px"></td>
+     <td><select data-k="rubro">${rubroOpts(RB[c.rubro]?c.rubro:"sin_asignar")}</select></td>
+     <td><select data-k="cat">${catOpts(c.cat)}</select></td>
+     <td class="r">${uso[c.id]||0}</td><td class="r ${ (totCamp[c.id]||0)<0?"num neg":""}">${fnum(totCamp[c.id]||0)}</td>
+     <td>${uso[c.id]?"":`<button class="btn sm danger" data-del>Eliminar</button>`}</td></tr>`).join("")}
+   </tbody></table></div>`;
+  $("#main").innerHTML=h;
+  $("#pQ").addEventListener("change",e=>{ui.planQ=e.target.value;render();});
+  $("#pR").addEventListener("change",e=>{ui.planR=e.target.value;render();});
+  $("#ncAdd").addEventListener("click",()=>{ const n=$("#ncN").value.trim(); if(!n) return;
+    if(P.cuentas.some(c=>c.nombre.toLowerCase()===n.toLowerCase())){toast("Esa cuenta ya existe");return;}
+    P.cuentas.push({id:uniqueCuentaId(n),nombre:n,rubro:$("#ncR").value,cat:$("#ncC").value}); store.savePlan(); render(); toast("Cuenta agregada"); });
+  document.querySelectorAll("tr[data-c]").forEach(tr=>{
+    const c=cuentaById(tr.dataset.c);
+    tr.querySelectorAll("[data-k]").forEach(el=>el.addEventListener("change",()=>{ c[el.dataset.k]=el.value.trim?el.value.trim():el.value; store.savePlan(); render(); toast("Cuenta actualizada"); }));
+    tr.querySelector("[data-del]")?.addEventListener("click",()=>{ P.cuentas=P.cuentas.filter(x=>x!==c); store.savePlan(); render(); });
+  });
+}
+
+/* ===================== Maestros ===================== */
+function renderMaestros(){
+  const usoF={},usoA={}; Object.values(CAMPS).forEach(c=>(c.lineas||[]).forEach(l=>{usoF[l.f]=1;usoA[l.a]=1;}));
+  const grupos=[...new Set(M.actividades.map(a=>a.grupo).filter(Boolean))];
+  let h=`<div class="grid2">
+  <div class="panel"><h2>Campañas</h2>
+   <table class="list"><thead><tr><th>Nombre</th><th>Desde</th><th>Hasta</th><th class="r">Conceptos</th><th></th></tr></thead><tbody>
+   ${M.campanas.map(c=>`<tr data-camp="${esc(c.id)}"><td><input data-k="nombre" value="${esc(c.nombre)}"></td><td><input type="date" data-k="desde" value="${esc(c.desde||"")}"></td><td><input type="date" data-k="hasta" value="${esc(c.hasta||"")}"></td><td class="r">${lineasDe(c.id).length}</td><td>${lineasDe(c.id).length?"":`<button class="btn sm danger" data-del>Eliminar</button>`}</td></tr>
+     <tr data-camp="${esc(c.id)}"><td colspan="5"><input data-k="nota" value="${esc(c.nota||"")}" placeholder="Notas de la campaña (criterios, fechas de cierre por actividad…)" style="width:100%"></td></tr>`).join("")}
+   </tbody></table>
+   <h3>Nueva campaña</h3>
+   <div class="formrow"><div class="fld"><label>Nombre</label><input id="cN" placeholder="Campaña 26/27"></div>
+     <div class="fld"><label>Desde</label><input type="date" id="cD"></div><div class="fld"><label>Hasta</label><input type="date" id="cH"></div>
+     <button class="btn" id="cAdd">Crear</button></div>
+  </div>
+  <div class="panel"><h2>Firmas</h2>
+   <table class="list"><tbody>${M.firmas.map(f=>`<tr data-firma="${esc(f.id)}"><td><input data-k="nombre" value="${esc(f.nombre)}" style="width:280px"></td><td>${usoF[f.id]?'<span class="muted">en uso</span>':'<button class="btn sm danger" data-del>Eliminar</button>'}</td></tr>`).join("")}</tbody></table>
+   <div class="formrow" style="margin-top:10px"><input id="fN" placeholder="Nueva firma"><button class="btn" id="fAdd">Agregar</button></div>
+   <h2 style="margin-top:22px">Actividades</h2>
+   <table class="list"><thead><tr><th>Actividad</th><th>Tipo de actividad</th><th></th></tr></thead><tbody>${M.actividades.map(a=>`<tr data-act="${esc(a.id)}"><td><input data-k="nombre" value="${esc(a.nombre)}"></td><td><input data-k="grupo" value="${esc(a.grupo||"")}" list="dlG"></td><td>${usoA[a.id]||a.id==="general"?'<span class="muted">en uso</span>':'<button class="btn sm danger" data-del>Eliminar</button>'}</td></tr>`).join("")}</tbody></table>
+   <datalist id="dlG">${grupos.map(g=>`<option value="${esc(g)}">`).join("")}</datalist>
+   <div class="formrow" style="margin-top:10px"><input id="aN" placeholder="Nueva actividad"><input id="aG" placeholder="Tipo (ej. Agricultura)" list="dlG"><button class="btn" id="aAdd">Agregar</button></div>
+   <div class="note">“Estructura general” recibe los gastos que no se imputan a una actividad puntual (indirectos de cada firma). Desde el estado de resultados se pueden prorratear.</div>
+   <h2 style="margin-top:22px">Clasificaciones de estructura</h2>
+   <div>${M.categorias.map(c=>`<span class="pill" style="margin:2px">${esc(c)}</span>`).join("")}</div>
+   <div class="formrow" style="margin-top:10px"><input id="gN" placeholder="Nueva clasificación"><button class="btn" id="gAdd">Agregar</button></div>
+  </div></div>`;
+  $("#main").innerHTML=h;
+  const bindRows=(sel,list,key)=>document.querySelectorAll(`tr[${sel}]`).forEach(tr=>{
+    const o=list().find(x=>x.id===tr.getAttribute(sel)); if(!o) return;
+    tr.querySelectorAll("[data-k]").forEach(el=>el.addEventListener("change",()=>{o[el.dataset.k]=el.value.trim(); store.saveMaestros(); toast("Guardado");}));
+    tr.querySelector("[data-del]")?.addEventListener("click",()=>{ M[key]=M[key].filter(x=>x!==o); if(key==="campanas") store.deleteCamp(o.id); store.saveMaestros(); render(); });
+  });
+  bindRows("data-camp",()=>M.campanas,"campanas"); bindRows("data-firma",()=>M.firmas,"firmas"); bindRows("data-act",()=>M.actividades,"actividades");
+  $("#cAdd").addEventListener("click",()=>{ const n=$("#cN").value.trim(); if(!n) return; let id=slug(n.replace(/campa[nñ]a/i,"")); while(M.campanas.some(c=>c.id===id)) id+="x";
+    M.campanas.push({id,nombre:n,desde:$("#cD").value,hasta:$("#cH").value,nota:""}); CAMPS[id]={lineas:[]}; store.saveMaestros(); store.saveCamp(id); ui.camp=id; render(); toast("Campaña creada"); });
+  $("#fAdd").addEventListener("click",()=>{ const n=$("#fN").value.trim(); if(!n) return; let id=slug(n); while(M.firmas.some(f=>f.id===id)) id+="x"; M.firmas.push({id,nombre:n}); store.saveMaestros(); render(); });
+  $("#aAdd").addEventListener("click",()=>{ const n=$("#aN").value.trim(); if(!n) return; let id=slug(n); while(M.actividades.some(a=>a.id===id)) id+="x"; const gi=M.actividades.findIndex(a=>a.id==="general");
+    const obj={id,nombre:n,grupo:$("#aG").value.trim()}; gi>=0?M.actividades.splice(gi,0,obj):M.actividades.push(obj); store.saveMaestros(); render(); });
+  $("#gAdd").addEventListener("click",()=>{ const n=$("#gN").value.trim(); if(!n||M.categorias.includes(n)) return; M.categorias.push(n); store.saveMaestros(); render(); });
+}
+
+/* ===================== Datos ===================== */
+function renderDatos(){
+  const L=ui.camp?lineasVista(ui.camp):[];
+  let h=`<div class="grid2">
+   <div class="panel"><h2>Exportar</h2>
+     <p class="muted">Copiá el estado de resultados de la vista actual (campaña, firma, columnas y prorrateo elegidos en la primera pestaña) para pegarlo en Excel, o un respaldo completo de la base.</p>
+     <div class="formrow"><button class="btn" id="xEr">Copiar ER para Excel</button><button class="btn ghost" id="xLin">Copiar conceptos de la campaña</button><button class="btn ghost" id="xJson">Copiar respaldo JSON</button></div>
+     <textarea class="code" id="xOut" style="margin-top:12px" readonly></textarea>
+   </div>
+   <div class="panel"><h2>Importar respaldo</h2>
+     <p class="muted">Reemplaza campañas, firmas, actividades y plan de cuentas por el contenido del archivo JSON (formato del respaldo).</p>
+     <input type="file" id="iFile" accept=".json,application/json">
+     <div id="iMsg" class="note"></div>
+   </div></div>`;
+  $("#main").innerHTML=h;
+  const out=t=>{ $("#xOut").value=t; navigator.clipboard?.writeText(t).then(()=>toast("Copiado al portapapeles"),()=>toast("Seleccioná el texto y copialo")); };
+  $("#xEr").addEventListener("click",()=>{ if(!L.length) return; const {cols}=columnas(L); const V=cols.map(c=>calcRows(L,c.match)),T=calcRows(L,()=>true);
+    const n=v=>fmt2.format(v).replace(/\./g,"");
+    const pc=(v,s)=>s?fmt2.format(v/s*100).replace(/\./g,"")+"%":"";
+    const rows=[["Concepto",...cols.flatMap(c=>c.sub?[c.label,"% s/ ventas"]:[c.label]),"Total","% s/ ventas"].join("\t")];
+    rowDefs(L).forEach(r=>rows.push([(r.n?r.n+". ":"")+r.lbl,...V.flatMap((v,i)=>cols[i].sub?[n(v[r.k]),pc(v[r.k],v.ventas)]:[n(v[r.k])]),n(T[r.k]),pc(T[r.k],T.ventas)].join("\t"))); out(rows.join("\n")); });
+  $("#xLin").addEventListener("click",()=>{ const rows=[["Firma","Actividad","Concepto","Rubro","Clasificación","Importe","Detalle"].join("\t")];
+    lineasDe(ui.camp).forEach(l=>{const c=cuentaById(l.c)||{}; rows.push([firmaN(l.f),actN(l.a),c.nombre||l.c,RB[rubroDe(l)].nombre,c.cat||"",fmt2.format(l.v).replace(/\./g,""),l.d||""].join("\t"));}); out(rows.join("\n")); });
+  $("#xJson").addEventListener("click",()=>out(JSON.stringify({maestros:M,plan:P,campanas:CAMPS})));
+  $("#iFile").addEventListener("change",async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ const d=JSON.parse(await f.text()); if(!d.maestros||!d.plan) throw new Error("Formato no reconocido");
+      M=Object.assign({categorias:CATS_DEFAULT.slice()},d.maestros); P=d.plan; const old=Object.keys(CAMPS); CAMPS=d.campanas||{};
+      store.saveMaestros(); store.savePlan(); Object.keys(CAMPS).forEach(id=>store.saveCamp(id)); old.filter(id=>!CAMPS[id]).forEach(id=>store.deleteCamp(id));
+      $("#iMsg").textContent="Respaldo importado."; ui.camp=null; render(); }
+    catch(err){ $("#iMsg").textContent="No se pudo importar: "+err.message; } });
+}
+
+/* ===================== Inicio ===================== */
+$("#verTxt").textContent=APP_VERSION;
+$("#btnNov").addEventListener("click",()=>verNovedades(true));
+setTimeout(()=>verNovedades(false),400);
+$("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; ui.tab=b.dataset.t; render(); });
+render();
+(async()=>{
+  let db=null;
+  try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db=null; }
+  if(db){ store=dbAdapter(db); store.start(); setStatus("Conectado"); }
+  else { store=localAdapter(); store.start(); setStatus("Modo local: los cambios quedan sólo en este navegador",true); }
+})();
+</script>
+</body>
+</html>
