@@ -6,6 +6,7 @@
 <title>Seguimiento de Cierre Económico — Grupo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --bg:#f5f3ee; --panel:#ffffff; --ink:#1c2230; --muted:#6b7280; --line:#e4e0d6; --line2:#efece5;
@@ -92,6 +93,17 @@ table.list td{padding:5px 10px}
 .muted{color:var(--muted)}
 details.pond{margin-bottom:16px;padding:12px 18px}
 details.pond summary{cursor:pointer;font-size:13.5px}
+#login{position:fixed;inset:0;background:var(--ink);display:none;align-items:center;justify-content:center;z-index:60}
+#login.on{display:flex}
+#login .card{background:#fff;border-radius:14px;padding:30px 32px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#login h2{margin:0 0 4px}
+#login .fld{margin-top:12px}
+#login input{width:100%}
+#login .btn{width:100%;margin-top:18px;padding:10px}
+#login .lnk{display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--accent);cursor:pointer;background:none;border:0;width:100%}
+#login .err{color:var(--neg);font-size:13px;margin-top:10px;min-height:18px}
+#userBox{display:none;align-items:center;gap:8px;font-size:12.5px;color:#d8dde6}
+#userBox button{background:none;border:1px solid #47506a;color:#d8dde6;border-radius:6px;padding:4px 10px;font:12.5px inherit;font-family:inherit;cursor:pointer}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
 .toast.on{opacity:1}
 .status{font-size:12px;color:#b9c0cc;margin-left:auto}
@@ -107,6 +119,7 @@ textarea.code{width:100%;height:200px;font:12px ui-monospace,monospace}
     <h1>Seguimiento de Cierre Económico</h1>
     <span class="sub" id="hdrSub">Estado de resultados por firma y actividad · USD</span>
     <span class="status" id="status">Conectando…</span>
+    <span id="userBox"><span id="userMail"></span><span id="userRol" class="pill" style="background:#2f3a52;color:#d8dde6"></span><button id="btnSalir">Salir</button></span>
     <button id="btnNov" style="background:none;border:1px solid #47506a;color:#d8dde6;border-radius:6px;padding:4px 10px;font:12.5px inherit;font-family:inherit;cursor:pointer">Novedades · v<span id="verTxt"></span></button>
   </div>
   <nav id="nav">
@@ -119,12 +132,14 @@ textarea.code{width:100%;height:200px;font:12px ui-monospace,monospace}
 </header>
 <main id="main"></main>
 <div class="toast" id="toast"></div>
+<div id="login"><div class="card" id="loginCard"></div></div>
 <div class="dlg" id="dlg"><div class="box" id="dlgBox"></div></div>
 
 <script>
 /* ===================== Versión y novedades ===================== */
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 const NOVEDADES = [
+  {v:"1.5.0", f:"16/11/2026", items:["La app se publica en GitHub (Portal-Cignetti) y guarda los datos en una base propia en la nube: ya no hace falta cuenta de claude.ai.","Ingreso con mail y contraseña. Los usuarios de consulta ven el estado de resultados; los editores además cargan conceptos, plan de cuentas y campañas.","Recuperación de contraseña por mail."]},
   {v:"1.4.0", f:"12/11/2026", items:["Cada actividad muestra su propio % sobre ventas al lado del importe: la estructura de costos de cada unidad de negocio se lee directo.","Selector «Mostrar»: USD y %, solo USD o solo %."]},
   {v:"1.3.0", f:"12/11/2026", items:["Versión instalable para Windows (Cierre Cignetti), con actualizaciones automáticas al abrir.","Al ingresar se muestran las novedades de cada versión. También podés verlas desde el botón «Novedades»."]},
   {v:"1.2.0", f:"12/11/2026", items:["Asignación de la estructura general a cada unidad de negocio según su % de facturación sobre la facturación total del grupo (o de cada firma).","Tabla de ponderadores con la facturación, el % y los costos asignados a cada unidad."]},
@@ -196,6 +211,7 @@ const lineasDe = id => (CAMPS[id]&&CAMPS[id].lineas)||[];
 const queues = {};
 function enqueue(path, fn){ const q=(queues[path]||Promise.resolve()).then(fn).catch(e=>{console.error(e); toast("No se pudo guardar: "+(e.code||e.message||e)); if(e&&e.code==="invalid_argument") readOnly=true;}); queues[path]=q; return q; }
 let readOnly=false;
+let soloLectura=false;   // usuario de consulta (Supabase)
 
 function localAdapter(){
   const K="cierre-grupo-v1";
@@ -332,7 +348,9 @@ function rowDefs(L){
 /* ===================== Render ===================== */
 function render(){
   if(!ui.camp || !M.campanas.find(c=>c.id===ui.camp)) ui.camp = (M.campanas[M.campanas.length-1]||{}).id||null;
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===ui.tab));
+  const SOLO_EDITOR=["carga","plan","maestros"];
+  if(soloLectura && SOLO_EDITOR.includes(ui.tab)) ui.tab="er";
+  document.querySelectorAll("#nav button").forEach(b=>{ b.classList.toggle("on",b.dataset.t===ui.tab); b.style.display = soloLectura && SOLO_EDITOR.includes(b.dataset.t) ? "none" : ""; });
   const fn={er:renderER,carga:renderCarga,plan:renderPlan,maestros:renderMaestros,datos:renderDatos}[ui.tab];
   const keepScroll = document.querySelector(".tablewrap")?.scrollLeft||0;
   fn();
@@ -656,7 +674,7 @@ function renderDatos(){
      <div class="formrow"><button class="btn" id="xEr">Copiar ER para Excel</button><button class="btn ghost" id="xLin">Copiar conceptos de la campaña</button><button class="btn ghost" id="xJson">Copiar respaldo JSON</button></div>
      <textarea class="code" id="xOut" style="margin-top:12px" readonly></textarea>
    </div>
-   <div class="panel"><h2>Importar respaldo</h2>
+   <div class="panel" style="${soloLectura?"display:none":""}"><h2>Importar respaldo</h2>
      <p class="muted">Reemplaza campañas, firmas, actividades y plan de cuentas por el contenido del archivo JSON (formato del respaldo).</p>
      <input type="file" id="iFile" accept=".json,application/json">
      <div id="iMsg" class="note"></div>
@@ -679,13 +697,113 @@ function renderDatos(){
     catch(err){ $("#iMsg").textContent="No se pudo importar: "+err.message; } });
 }
 
+/* ===================== Supabase (versión publicada en GitHub) ===================== */
+const SB_URL = "https://vmywxlqumfkcluohrbqc.supabase.co";
+const SB_KEY = "sb_publishable_AP0rdDOZAJ3Df57hkSHbTw_r2r9trq1";   // clave pública: los datos los protegen el login y los permisos de la base
+let sb = null;
+
+function aplicarDoc(path, data){
+  if(path==="config/maestros"){ M={firmas:data.firmas||[],actividades:data.actividades||[],campanas:data.campanas||[],categorias:data.categorias||CATS_DEFAULT.slice()}; }
+  else if(path==="config/plan"){ P={cuentas:data.cuentas||[]}; }
+  else if(path.startsWith("campanas/")){ CAMPS[path.slice(9)]=data; }
+}
+function sbAdapter(){
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const guardar=(path,data)=>enqueue(path,async()=>{
+    if(soloLectura){ toast("Tu usuario es de consulta: no puede modificar datos"); return; }
+    const {error}=await sb.from("docs").upsert({path,data,updated_at:new Date().toISOString()});
+    if(error){ console.error(error); toast(/row-level|permission|policy/i.test(error.message)?"No tenés permiso para modificar datos":"No se pudo guardar: "+error.message); }
+  });
+  return {
+    kind:"supabase",
+    async start(){
+      setStatus("Cargando datos…");
+      const {data,error}=await sb.from("docs").select("path,data");
+      if(error){ setStatus("Error al leer la base: "+error.message,true); return; }
+      CAMPS={}; (data||[]).forEach(r=>aplicarDoc(r.path,r.data));
+      loaded={m:true,p:true,c:true}; setStatus("Datos en la nube"); render();
+      sb.channel("docs-cambios").on("postgres_changes",{event:"*",schema:"public",table:"docs"},pl=>{
+        if(pl.eventType==="DELETE"){ const pth=(pl.old||{}).path||""; if(pth.startsWith("campanas/")) delete CAMPS[pth.slice(9)]; }
+        else if(pl.new) aplicarDoc(pl.new.path,pl.new.data);
+        render();
+      }).subscribe();
+    },
+    saveMaestros(){ return guardar("config/maestros",clone(M)); },
+    savePlan(){ return guardar("config/plan",clone(P)); },
+    saveCamp(id){ return guardar("campanas/"+id,clone(CAMPS[id]||{lineas:[]})); },
+    deleteCamp(id){ delete CAMPS[id]; return enqueue("campanas/"+id,async()=>{ if(soloLectura) return; const {error}=await sb.from("docs").delete().eq("path","campanas/"+id); if(error) toast("No se pudo eliminar: "+error.message); }); },
+  };
+}
+function pantallaLogin(modo, msg){
+  const c=$("#loginCard"); $("#login").classList.add("on");
+  const cab=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="34" height="34" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="20" fill="#1c2230"/><rect x="22" y="48" width="14" height="30" rx="3" fill="#4c8c76"/><rect x="43" y="36" width="14" height="42" rx="3" fill="#4c8c76"/><rect x="64" y="22" width="14" height="56" rx="3" fill="#a8834a"/></svg><div><h2>Cierre Cignetti</h2><div class="muted" style="font-size:12.5px">Seguimiento del cierre económico</div></div></div>`;
+  if(modo==="nueva"){
+    c.innerHTML=cab+`<p class="muted" style="font-size:13px">Elegí tu nueva contraseña.</p>
+      <div class="fld"><label>Nueva contraseña</label><input type="password" id="lgP1" autocomplete="new-password"></div>
+      <div class="fld"><label>Repetila</label><input type="password" id="lgP2" autocomplete="new-password"></div>
+      <button class="btn" id="lgGo">Guardar contraseña</button><div class="err" id="lgErr">${esc(msg||"")}</div>`;
+    $("#lgGo").onclick=async()=>{ const a=$("#lgP1").value,b=$("#lgP2").value;
+      if(a.length<8){ $("#lgErr").textContent="Usá al menos 8 caracteres."; return; }
+      if(a!==b){ $("#lgErr").textContent="Las contraseñas no coinciden."; return; }
+      const {error}=await sb.auth.updateUser({password:a}); if(error){ $("#lgErr").textContent=error.message; return; }
+      history.replaceState(null,"",location.pathname); toast("Contraseña actualizada"); const {data:{session}}=await sb.auth.getSession(); if(session) entrar(session); };
+    return;
+  }
+  if(modo==="olvide"){
+    c.innerHTML=cab+`<p class="muted" style="font-size:13px">Te mandamos un mail con un link para elegir una contraseña nueva.</p>
+      <div class="fld"><label>Mail</label><input type="email" id="lgMail" autocomplete="email"></div>
+      <button class="btn" id="lgGo">Enviar link</button><button class="lnk" id="lgVolver">Volver al ingreso</button><div class="err" id="lgErr">${esc(msg||"")}</div>`;
+    $("#lgVolver").onclick=()=>pantallaLogin("login");
+    $("#lgGo").onclick=async()=>{ const m=$("#lgMail").value.trim(); if(!m) return;
+      const {error}=await sb.auth.resetPasswordForEmail(m,{redirectTo:location.origin+location.pathname});
+      $("#lgErr").style.color=error?"":"var(--pos)"; $("#lgErr").textContent=error?error.message:"Listo: revisá tu mail (y la carpeta de spam)."; };
+    return;
+  }
+  c.innerHTML=cab+`<div class="fld"><label>Mail</label><input type="email" id="lgMail" autocomplete="username"></div>
+    <div class="fld"><label>Contraseña</label><input type="password" id="lgPass" autocomplete="current-password"></div>
+    <button class="btn" id="lgGo">Ingresar</button><button class="lnk" id="lgOlv">Olvidé mi contraseña</button><div class="err" id="lgErr">${esc(msg||"")}</div>`;
+  const go=async()=>{ $("#lgErr").textContent=""; $("#lgGo").disabled=true;
+    const {data,error}=await sb.auth.signInWithPassword({email:$("#lgMail").value.trim(),password:$("#lgPass").value});
+    $("#lgGo").disabled=false;
+    if(error){ $("#lgErr").textContent=/invalid/i.test(error.message)?"Mail o contraseña incorrectos.":error.message; return; }
+    entrar(data.session); };
+  $("#lgGo").onclick=go; $("#lgPass").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+  $("#lgOlv").onclick=()=>pantallaLogin("olvide");
+  setTimeout(()=>$("#lgMail")?.focus(),50);
+}
+let entrado=false;
+async function entrar(session){
+  if(entrado) return; entrado=true;
+  $("#login").classList.remove("on");
+  const mail=(session.user.email||"").toLowerCase();
+  const {data}=await sb.from("editores").select("email").eq("email",mail);
+  soloLectura=!(data&&data.length);
+  $("#userMail").textContent=mail; $("#userRol").textContent=soloLectura?"Consulta":"Editor"; $("#userBox").style.display="flex";
+  store=sbAdapter(); await store.start();
+  setTimeout(()=>verNovedades(false),400);
+}
+async function iniciarSupabase(){
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
+  $("#btnSalir").onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+  sb.auth.onAuthStateChange((ev)=>{ if(ev==="PASSWORD_RECOVERY"){ entrado=false; $("#userBox").style.display="none"; pantallaLogin("nueva"); } });
+  if(/type=recovery/.test(location.hash)) return;   // espera el evento PASSWORD_RECOVERY
+  const {data:{session}}=await sb.auth.getSession();
+  if(session) entrar(session); else { setStatus("Ingresá con tu usuario"); pantallaLogin("login"); }
+}
+const USAR_SUPABASE = /github\.io$/i.test(location.hostname) || /[?&]sb=1/.test(location.search);
+
 /* ===================== Inicio ===================== */
 $("#verTxt").textContent=APP_VERSION;
 $("#btnNov").addEventListener("click",()=>verNovedades(true));
-setTimeout(()=>verNovedades(false),400);
+if(!USAR_SUPABASE) setTimeout(()=>verNovedades(false),400);
 $("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; ui.tab=b.dataset.t; render(); });
 render();
 (async()=>{
+  if(USAR_SUPABASE){
+    if(window.supabase){ await iniciarSupabase(); }
+    else setStatus("No se pudo cargar la conexión a la base. Revisá internet y recargá.",true);
+    return;
+  }
   let db=null;
   try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db=null; }
   if(db){ store=dbAdapter(db); store.start(); setStatus("Conectado"); }
